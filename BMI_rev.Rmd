@@ -1,0 +1,114 @@
+Quetelet's Body Mass Index
+========================================================
+작업환경 정리
+--------------------------------------------------------
+- 현재 작업디렉토리 찾아보기
+```{r}
+getwd()
+```
+- 검색가능한 package 와 data 열거
+```{r}
+search()
+```
+rn96.txt 자료 읽어들이고, 기초통계 요약하기
+---------------------------------------
+- rn96.txt 자료 읽어들이기, 원 자료를 보고 header 매개변수 추가
+```{r}
+rn96<-read.table("rn96.txt",header=TRUE)
+```
+- rn96 의 자료구조 살피기. 
+```{r}
+str(rn96)
+```
+- height 와 weight 의 기초통계 살피기
+```{r}
+summary(rn96)
+```
+- 평균과 표준편차만 살펴보려면
+```{r}
+apply(rn96,2,mean)
+apply(rn96,2,sd)
+```
+- height 와 weight 의 산점도 그리기
+```{r fig.width=5, fig.height=5}
+plot(weight~height, data=rn96)
+```
+- 선형회귀선 추가하기
+```{r fig.width=5, fig.height=5}
+plot(weight~height, data=rn96)
+abline(lm(weight~height, data=rn96)$coefficient)
+```
+- 선형모형으로 분석하기
+```{r}
+lm(weight~height, data=rn96)
+```
+- 회귀계수와 관련 통계량 살피기
+```{r}
+summary(lm(weight~height, data=rn96))
+```
+- lowess 회귀선 추가하기
+```{r fig.width=5, fig.height=5}
+plot(weight~height, data=rn96)
+abline(lm(weight~height, data=rn96)$coefficient)
+lines(lowess(rn96$height,rn96$weight),col="red")
+```
+- png 포맷으로 내보내기
+```{r}
+png("rn-plot.png",height=640,width=640)
+plot(weight~height, data=rn96)
+abline(lm(weight~height, data=rn96)$coefficient)
+lines(lowess(rn96$height,rn96$weight),col="red")
+dev.off()
+```
+BMI 계산하고 줄기-잎 그리기
+---------------------------
+- 조금 편하게 작업하기 위해서
+```{r}
+attach(rn96)
+search()
+```
+- BMI 공식은 $\frac{몸무게(kg)}{키^2(m)}$
+```{r}
+rn96$BMI<-round(weight/(height/100)^2,digits=1)
+head(rn96)
+```
+- 다음 작업이 왜 필요한지 생각해 볼 것.
+```{r}
+detach(rn96)
+attach(rn96)
+```
+- BMI 값들의 줄기-잎 그림 그리기
+```{r}
+stem(BMI)
+```
+- 조금더 알아보기 쉽게 매개변수를 바꾸기
+```{r}
+stem(BMI,scale=2)
+```
+- 각 변수는정규분포에 가까울까?
+```{r fig.width=5, fig.height=5}
+qqnorm(weight)
+```
+```{r fig.width=5, fig.height=5}
+qqnorm(height)
+```
+```{r fig.width=5, fig.height=5}
+qqnorm(BMI)
+```
+- weight와 height의 줄기-잎 그림
+```{r}
+stem(weight)
+stem(height)
+```
+- Shapiro-Wilk test
+```{r}
+shapiro.test(weight)
+shapiro.test(height)
+shapiro.test(BMI)
+```
+- Kolmogorov-Smirnov test
+```{r}
+ks.test(weight, "pnorm", mean=mean(weight), sd=sd(weight))
+ks.test(height, "pnorm", mean=mean(height), sd=sd(height))
+ks.test(BMI, "pnorm", mean=mean(BMI), sd=sd(BMI))
+```
