@@ -107,14 +107,14 @@ y.norm<-dnorm(x,mean=mean.chest,sd=sd.chest)
 ```{r fig.width=12, fig.height=6}
 par(mfrow=c(2,2))
 h1<-hist(quetelet.chest.long,prob=T,ylim=c(0,0.2))
-lines(x,y.norm,col="red")
+curve(dnorm(x,mean.chest,sd.chest),add=TRUE,col="red")
 h2<-hist(quetelet.chest.long,prob=T,right=F,ylim=c(0,0.2))
-lines(x,y.norm,col="red")
+curve(dnorm(x,mean.chest,sd.chest),add=TRUE,col="red")
 h3<-hist(quetelet.chest.long,prob=T,breaks=32.5:48.5,ylim=c(0,0.2))
-lines(x,y.norm,col="red")
+curve(dnorm(x,mean.chest,sd.chest),add=TRUE,col="red")
 r.noise<-runif(5738)-0.5
 h4<-hist(quetelet.chest.long+r.noise,prob=T,ylim=c(0,0.2))
-lines(x,y.norm,col="red")
+curve(dnorm(x,mean.chest,sd.chest),add=TRUE,col="red")
 ```
 
 - 랜덤 노이즈를 더하고 breaks도 조정하면
@@ -122,10 +122,8 @@ lines(x,y.norm,col="red")
 ```{r fig.width=6, fig.height=4}
 par(mfrow=c(1,1))
 h5<-hist(quetelet.chest.long+r.noise,prob=T,breaks=32.5:48.5,ylim=c(0,0.2))
-lines(x,y.norm,col="red")
+curve(dnorm(x,mean.chest,sd.chest),add=TRUE,col="red")
 ```
-
-- lines() 대신, `curve(dnorm(x,mean.chest,sd.chest),add=TRUE,col="red")` 를 사용해도 같은 결과를 얻을 수 있음(Try!)
 
 - 각각의 히스토그램들을 그릴 때 사용한 breaks와 counts 값을 추적 
 
