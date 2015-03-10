@@ -1,8 +1,3 @@
-abline(a=0,b=1,lty=1)
-gini<-x[2]y[2]+(x[3]-x[2])*(y[2]+y[3])+(x[4]-x[3])*(y[3]+y[4])+(x[5]-x[4])*(y[4]+y[5])
-gini<-x[2]*y[2]+(x[3]-x[2])*(y[2]+y[3])+(x[4]-x[3])*(y[3]+y[4])+(x[5]-x[4])*(y[4]+y[5])
-gini
-source("./Documents/통계분석사례연구/R.WD/lifetable/gini.r")
 s
 s*2
 p<-plot(x,y,type="l",xlab="",ylab="")
@@ -192,59 +187,66 @@ con<-url("http://www.jhsph.edu","r'")
 x<-readLines(con)
 head(x)
 q("no")
-IQR
-setwd("~/Dropbox/works/class/Stat_Graphics/R.WD/")
-anscombe
-search()
-library(ggplot2)
-library("ggplot2")
-install.packages("rmarkdown")
-library("rmarkdown")
-rmarkdown::render("Anscombe.Rmd")
-install.packages("pandoc")
-install.packages("knitr")
-rmarkdown::render("Anscombe.Rmd")
-rmarkdown::render("Anscombe.Rmd")
-rmarkdown::render("Anscombe.Rmd")
-rmarkdown::render("Anscombe.Rmd")
-rmarkdown::render("Anscombe.Rmd")
-rmarkdown::render("Anscombe.Rmd")
-rmarkdown::render("Anscombe.Rmd")
-rmarkdown::render("Anscombe.Rmd")
-savehistory("rmd")
-?savehistory
-savehistory("rmd.Rhistory")
-setwd("../qplot/")
-search()
-mtcars
-mtcars$cylinder<-as.factor(mtcars$cyl)
-qplot(cylinder,mpg, data=mtcars, geom=c("boxplot","jitter"), fill=cylinder, main="Boxplots", xlba="cylinders",ylab="Miles/Gallon")
-quartz(7,7,dpi=72)
-?quartz
-quartz(title="None",7,7,dpi=72)
-qplot(cylinder,mpg, data=mtcars, geom=c("boxplot","jitter"), fill=cylinder, main="Boxplots", xlba="cylinders",ylab="Miles/Gallon")
-transmission<-factor(mtcars$am,levels=c(0,1),labels=c("Automatic","Manual"))
-help(data="mtcars")
-help(data:"mtcars")
-help(mtcars)
-?help
-qplot(wt,mpg,data=mtcars,color=transmission, shape=transmission, geom=c("point","smooth"), method="lm",formula=y~x)
-dev.off()
-quartz("Boom",7,7,dpi=72)
-mtcars$cyl<-factor(mtcars$cyl,levels=c(4,6,8), labels=c("4 cylinders","6 cylinders","8 cylinders"))
-mtcars$am<-factor(mtcars$am, levels=c(0,1),labels=c("Automatic","Manual"))
-qplot(wt,mpg,data=mtcars,facets=am~cyl,size=hp)
-qplot(wt,mpg,data=mtcars,facets=am~.,size=hp)
-qplot(wt,mpg,data=mtcars,facets=.~cyl,size=hp)
-qplot(wt,mpg,data=mtcars,facets=.~am,size=hp)
-qplot(wt,mpg,data=mtcars,facets=.~cyl,size=hp)
-singer
-data(singer, package="lattice")
-singer
-str(singer)
-qplot(height,data=singer,geom=c("density"), facets=voice.part~.,fill=voice.part)
-setwd("../")
+opar<-par(no.reaonly=TRUE)
+opar<-par(no.readonly=TRUE)
+par(fig=c(0,0.8,0,0.8))
+plot(mtcars$wt,mtcars$mpg,)
+plot(mtcars$wt,mtcars$mpg,
+xlab="Miles per Gallon",
+ylab="Car Weight")
+par(fig=c(0,0.8,0.55,1), new=TRUE)
+boxplot(mtcars$wt, horizontal=TRUE, axes= FALSE)
+par(fig=c(0.65,1,0,0.8), new=TRUE)
+boxplot(mtcars$mpg,axes=FALSE)
+mtext("Enhanced Scatterplot", side=3, outer=TRUE, line=-3)
+par(opar)
+quartz(dpi=72)
+par(fig=c(0,0.8,0,0.8))
+plot(mtcars$wt,mtcars$mpg,
+xlab="Miles per Gallon",
+ylab="Car Weight")
+par(fig=c(0,0.8,0.55,1))
+boxplot(mtcars$wt, horizontal=TRUE, axes= FALSE)
+par(fig=c(0.65,1,0,0.8), new=TRUE)
+boxplot(mtcars$mpg,axes=FALSE)
+par(opar)
+args(par)
+?par
+par(no.readonly=TRUE)
+ls()
+setwd("~/Dropbox/works/class/Stat_Methods/R.WD/")
+load("normal_test.RData")
+ls()
+opar<-par(no.readonly=TRUE)
+plot(ecdf(BMI))
+plot(ecdf(rn96$height))
+mean.height<-mean(rn96$height)
+sd.height<-sd(rn96$height)
+sample.norm<-rnorm(1000,mean.height,sd.height)
+lines(ecdf(sample.norm))
+minn.height<-min(rn96$height)
+min.height<-min(rn96$height)
+max.height<-max(rn96$height)
+x.height<-seq(min.height,max.height,1000)
+lines(x.height,pnorm(x.height,mean.height,sd.height),col="red")
+plot(x.height,pnorm(x.height,mean.height,sd.height),col="red")
+?pnorm
+head(x.height)
+x.height
+min.height
+max.height
+seq(min.height,max.height,1000)
+?seq
+x.height<-seq(min.height,max.height,1/100)
+plot(ecdf(rn96$height))
+lines(x.height,pnorm(x.height,mean.height,sd.height),col="red")
+plot(ecdf(rn96$height))
+lines(x.height,pnorm(x.height,mean.height,sd.height),col="red")
+ls()
 getwd()
-setwd("../Stat_Methods/R.WD/")
-rmarkdown::render("BMI.Rmd")
-q("yes")
+save.image(file="normal_test2.RData")
+savehistory(file="normal_test.Rhistory")
+q9"no#
+
+q("yes")#
+
