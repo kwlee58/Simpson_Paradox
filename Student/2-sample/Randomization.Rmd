@@ -1,0 +1,123 @@
+---
+title: "Randomization"
+author: "coop711"
+date: "2015년 4월 6일"
+output: html_document
+---
+
+출석부 자료로부터 랜덤화하는 과정
+---------------------------------
+
+e-campus의 온라인 접속횟수 기록을 다운로드 받은 엑셀 파일에서 필요한 부분을 발췌한 자료 읽어들이기. 
+
+```{r}
+class.roll<-read.table("class_roll.txt", header=TRUE, sep="")
+head(class.roll)
+str(class.roll)
+```
+
+
+red 군에 속할 ID를 랜덤추출하는 과정. 우선, red에 속할 인덱스를 추출하되, 이미 기존에 잘 추출한 표본을 이용할 것이므로 굳이 R에서 다시 돌릴 필요는 없음.
+```
+red.id<-sample(1:71, size=35)
+red.id
+```
+
+load()로 기존의 랜덤화한 두 표본 인덱스를 불러들이고고, ifelse()를 이용하여 red 군과 black 군 구분. %in% 의 용법에 유의. factor()로 설정하는 이유를 생각해 볼 것. 
+
+```{r}
+load("random_id.rda")
+class.roll$group<-factor(ifelse((1:71) %in% red.id, "red", "black"), levels=c("red", "black"))
+```
+
+randomization이 적절히 이루어졌는지 기초통계값으로 확인. 만족스럽지 않으면 앞의 과정 반복.
+
+```{r}
+tapply(class.roll$n.accesses,class.roll$group,summary)
+```
+
+Boxplot 으로 확인.
+
+```{r fig.width=8, fig.height=4}
+par(mfrow=c(1,2))
+boxplot(n.accesses~group,data=class.roll)
+plot(n.accesses~group,data=class.roll)
+par(mfrow=c(1,1))
+```
+
+Empirical CDF 로 확인. 먼저 black.id 를 red.id 아닌 인덱스 로 정의 
+
+```{r fig.width=6, fig.height=6}
+black.id<-(1:71)[-red.id]
+plot(ecdf(class.roll$n.accesses[red.id]), col="red",main="표본누적분포함수")
+lines(ecdf(class.roll$n.accesses[black.id]), pch=15)
+legend(x=0,y=0.9,legend=c("red","black"),pch=16:15,col=c("red","black"))
+```
+
+```{r}
+ks.test(class.roll$n.accesses[red.id], class.roll$n.accesses[black.id])
+```
+
+13학번 이후와 12학번 이전으로 ID 구분. n.accesses 를 100 회 기준, 혹은 50회 기준으로 나누어 randomization의 효과 확인. table()의 value를 잘 파악하기 위하여 어떤 조치들을 취하였는지 잘 살필 것. factor()로 굳이 설정한 것, dnn=NULL 이 있고 없고의 차이들을 잘 파악할 것. 
+
+```{r}
+ID.13<-factor(ifelse(substr(class.roll$ID, 1, 4) >= 2013, "younger.13", "older.13"), levels=c("younger.13", "older.13"))
+table(ID.13)
+table(ID.13[red.id])
+table(ID.13[black.id])
+ID.12<-factor(ifelse(substr(class.roll$ID, 1, 4) >= 2012, "younger.12", "older.12"), levels=c("younger.12", "older.12"))
+table(ID.12)
+table(ID.12[red.id])
+table(ID.12[black.id])
+n.accesses.100<-factor(ifelse(class.roll$n.accesses >= 100, "above 100", "less than 100"), levels=c("above 100", "less than 100"))
+table(n.accesses.100)
+table(n.accesses.100[red.id])
+table(n.accesses.100[black.id])
+n.accesses.50<-factor(ifelse(class.roll$n.accesses >= 50, "above 50", "less than 50"), levels=c("above 50", "less than 50"))
+table(n.accesses.50)
+table(n.accesses.50[red.id])
+table(n.accesses.50[black.id])
+```
+
+실험 참여자와 불참자의 분류
+---------------------------
+
+실험 참여자  학번과 이름을 lab.presence 로 읽어 들임. 변수명으로 ID와 name 추가.
+
+```{r}
+lab.presence<-read.table("lab_presence.txt", header=F, sep="")
+dimnames(lab.presence)[[2]]<-c("ID", "name")
+head(lab.presence)
+```
+
+전체 출석부에서 실험 참여자 여부를 구분하여 새로운 factor, presence 로 설정. ifelse()의 반복된 활용과 factor level 설정에 유의. 
+
+```{r}
+presence<-factor(ifelse(class.roll$ID %in% lab.presence$ID, "present", "absent"), levels=c("present", "absent"))
+class.roll.2<-data.frame(class.roll, presence=presence)
+head(class.roll.2, n=10)
+```
+
+group과 presence 를 분류변수로 하여 table() 작성.
+
+```{r}
+table(class.roll.2$group, class.roll.2$presence)
+```
+
+성씨로 확인
+-----------
+
+비교적 많은 수의 학생들이 가지고 있는 성씨인 '김'씨와 '이'씨 성은 어떻게 나뉘어지는 지 살펴보자.
+우선, 이씨 성을 가진 학생들을 추출하자면.
+
+```{r}
+kim<-substr(class.roll$name, 1, 1)=="김"
+class.roll$name[kim]
+kim.fac<-factor(ifelse(kim, "kim", "else"), levels=c("kim", "else"))
+lee<-substr(class.roll$name, 1, 1)=="이"
+class.roll$name[lee]
+lee.fac<-factor(ifelse(lee, "lee", "else"), levels=c("lee", "else"))
+table(class.roll$group, kim.fac, dnn=NULL)
+table(class.roll$group, lee.fac, dnn=NULL)
+```
+

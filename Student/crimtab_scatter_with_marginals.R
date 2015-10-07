@@ -1,0 +1,8 @@
+par(mar=c(5,5,1,1))
+par(fig=c(0,0.8,0,0.8))
+plot(finger~height, data=crimtab.3.long, pch=20)
+par(fig=c(0,0.8,0.6,1), new=TRUE)
+hist(crimtab.3.long[,"height"], axes=F, ann=F)
+par(fig=c(0.6,1,0,0.8), new=TRUE)
+barplot(table(cut(crimtab.3.long[,"finger"], breaks=10)), space=0, col="white", horiz=T, axes=F, axisnames=F)
+par(fig=c(0,1,0,1))

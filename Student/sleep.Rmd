@@ -1,0 +1,101 @@
+---
+title: "Cushny and Peeble’s Data"
+author: "coop711"
+date: "2015년 3월 26일"
+output: html_document
+---
+
+Data Management
+---------------
+
+- R-base에서 제공하고 있는 sleep data 는 long form data frame 으로 주어져 있음.
+
+```{r}
+sleep
+str(sleep)
+```
+
+- long form을  wide form으로 변환하고, 각각의 경우에 적절한 t-test를 시도해 볼 것임. 먼저 wide form 으로 변환하는 작업은 결국 data frame을 새로 구성하는 것일 뿐이므로 다음으로 완료됨.
+
+``` {r}
+sleep.wide<-data.frame(A=sleep[sleep$group==1,1], B=sleep[sleep$group==2,1])
+sleep.wide
+```
+
+One Sample T test
+------------------
+
+- long form 에서 각 수면제의 효과가 없다는 가설을 t-test 하려면 
+
+```{r}
+t.test(sleep$extra[sleep$group==1], alternative="greater")
+t.test(sleep$extra[sleep$group==2], alternative="greater")
+```
+
+- 둘을 단번에 수행하려면 tapply()를 이용하여
+
+```{r}
+tapply(sleep$extra, sleep$group, t.test, alternative="greater")
+```
+
+- 두 수면제 간의 효과에 차이가 없다는 가설을 검증하려면, paired 임을 유념하여야 함.
+
+```{r}
+t.test(sleep$extra[sleep$group==1], sleep$extra[sleep$group==2], paired=T)
+```
+
+- formula 형식을 빌리면 다음과 같이 비교적 간결하게 기술할 수 있음.
+
+```{r}
+t.test(extra~group, data=sleep, paired=T)
+```
+
+- 두 수면제의 효과를 boxplot을 그려 비교하면(산점도를 그려 비교하려면 어떻게?)
+
+```{r}
+plot(extra~group, data=sleep, main="Using Long Form")
+```
+
+- wide form 으로 같은 작업을 수행하면
+
+```{r}
+
+attach(sleep.wide)
+t.test(A, alternative="greater")
+t.test(B, alternative="greater")
+```
+
+- apply() 를 이용해서 한번에 수행하면
+
+```{r}
+apply(sleep.wide, 2, t.test, alternative="greater")
+```
+
+- 두 수면제 간의 효과 차이를 검증하려면
+
+```{r}
+t.test(A, B, paired=T)
+```
+
+- 각각의 효과를 산점도를 그려 비교하면
+
+```{r}
+plot(A, B, main="Using Wide Form", xlim=c(-2,6), ylim=c(-2,6))
+abline(a=0, b=1, col="red")
+text(x=4, y=3, labels="y=x")
+cor(A, B)
+```
+
+- 정규성에 대한 검증은 각자 수행해 볼 것.
+
+```{r}
+library(nortest)
+apply(sleep.wide, 2, ad.test)
+```
+
+- 작업 디렉토리 정리
+
+```{r}
+save(file="sleep.rda", "sleep.wide")
+detach()
+```

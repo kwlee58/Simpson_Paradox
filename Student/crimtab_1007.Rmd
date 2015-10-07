@@ -1,0 +1,203 @@
+---
+title: "Student 3000 Criminal Data"
+author: "coop711"
+date: "2015년 10월 7일"
+output: html_document
+---
+
+## Structure of Data
+
+
+### Data Manipulation
+
+* W. S. Gosset 이 t-분포를 유도하느라고 모의실험에 활용한 자료는 다음과 같음.
+    + `table`은 본질적으로 `matrix`임. 행과 열의 이름에 측정값을 글자로 새겨 넣었기 때문에  long format으로 변환할 때 많은 주의가 필요함.
+
+```{r}
+# options(width=132)
+crimtab
+str(crimtab)
+```
+
+* 이러한 table 구조의 행과 열에 이름을 붙이려면, `list`로 부여
+    + cm 단위로 되어 있는 키의 계급을 인치 단위로 변환하면 숨어있던 자료구조다 드러남.
+```{r}
+dimnames(crimtab)
+crimtab.2 <- crimtab
+colnames(crimtab.2) <- as.numeric(colnames(crimtab.2))/2.54
+(dimnames(crimtab.2) <- list(finger = rownames(crimtab.2), height = colnames(crimtab.2)))
+crimtab.2
+str(crimtab.2)
+```
+
+* long format 으로 변환
+    + 1차적으로 각 손가락 길이와 키의 조합을 갖는 인원수로 구성된 data frame으로 변환하고, case 단위의 long format data frame으로 2단계 변환 
+    + `as.data.frame()` 에서 `stringsAsFactors = FALSE`가 매우 중요한 역할을 하는 것임. 이 옵션을 설정하지 않을 경우 `Factor`로 잡히면 `numeric`으로 전환할 수 없게 됨. `Factor`는 본질적으로 음이 아닌 정수로 취급됨.
+    + 보통 이 설정은 `stringsAsFactors = default.stringsAsFactors()`가 default 설정으로 되어 있고, 따라서 `default.stringsAsFactors() = ` `r default.stringsAsFactors()` 에 따라 설정을 바꿔주면 되어야 하나 써 있는 대로 되지 않는 경우가 있어서 가능한 설정해주는 것이 안전함.
+    + 단순히 `data.frame()`으로 변환할 경우 `Factor`로 설정되어`numeric`으로 변환하더라도 의미없는 숫자를 얻게 됨. 
+    + `as.data.frame()`의 결과물로 두 개의 character vector 와 counts를 나타내는 새로운 변수 `Freq`가 나오게 됨. 손가락 길이와 키를 나타내는 character를 numeric으로 전환하고 다음 작업 진행.
+    
+```{r}
+crimtab.2.df <- as.data.frame(crimtab.2, stringsAsFactors = FALSE)
+str(crimtab.2.df)
+crimtab.2.df[1:2] <- sapply(crimtab.2.df[1:2], as.numeric)
+str(crimtab.2.df)
+crimtab.2.long <- mapply(function(x) rep(x, crimtab.2.df$Freq), crimtab.2.df[c("finger", "height")])
+# crimtab.2.long <- mapply(function(x, y) rep(x, y = crimtab.2.df$Freq), crimtab.2.df[c("finger", "height")])
+# crimtab.2.long <- mapply(function(x, y) rep(x, y), y = crimtab.2.df$Freq, crimtab.2.df[c("finger", "height")])
+# crimtab.2.long <- mapply(function(x) rep(x, crimtab.2.df$Freq), crimtab.2.df[, c("finger", "height")])
+# crimtab.2.long <- mapply(function(x) rep(x, crimtab.2.df$Freq), crimtab.2.df[1:2])
+# crimtab.2.long <- mapply(function(x) rep(x, crimtab.2.df$Freq), crimtab.2.df[, 1:2])
+# crimtab.2.long <- mapply(function(x) rep(x, crimtab.2.df$Freq), crimtab.2.df[, 2])
+# crimtab.2.long <- mapply(function(x) rep(x, crimtab.2.df$Freq), crimtab.2.df$height)
+str(crimtab.2.long)
+crimtab.2.long.df <- data.frame(crimtab.2.long)
+str(crimtab.2.long.df)
+```
+
+## Graphic Representation
+
+### Base Graphics
+
+* 키와 손가락길이의 산점도 
+
+```{r}
+plot(finger ~ height, data = crimtab.2.long.df)
+```
+
+* 변수 각각의 히스토그램은?
+
+```{r fig.width=8, fig.height=4}
+par(mfrow=c(1,2))
+hist(crimtab.2.long.df$height, main="Histogram of Height", xlab="height(inches)")
+hist(crimtab.2.long.df$finger, main="Histogram of Finger Length", xlab= "finger length(cm)")
+# hist(crimtab.2.long.df["height"], main="Histogram of Height", xlab="height(inches)")
+# hist(crimtab.2.long.df["finger"], main="Histogram of Finger Length", xlab= "finger length(cm)")
+```
+
+* 평균과 표준편차를 한번에 구하려면 다음과 같이 anonymous function을 작성하고 `mapply()`를 이용하는 게 편함. 이를 모수로 하는 정규곡선을 덧씌워 볼 것.
+    + `mean.sd()`도 anonymous function 으로 평균과 표준편차를 계산해서 출력하는 함수임. 이와 같은 함수를 저장해 놓으려면 `dump()`를 이용함.
+    + 이와 같이 계산한 평균과 표준편차를 모수로 하는 정규곡선을 덧씌워 볼 것.
+```{r}
+mean.sd <- function(x) {
+  mean <- mean(x, na.rm = TRUE)
+  sd <- sd(x)
+  list(mean = mean, sd = sd)
+}
+(crimtab.stat <- mapply(mean.sd, crimtab.2.long.df))
+str(crimtab.stat)
+# apply(crimtab.2.long, 2, mean)
+# apply(crimtab.2.long, 2, sd)
+dump("mean.sd", file="mean_sd.R")
+```
+
+* `crimtab.stat`이 어떤 성격을 갖는지 다음 질문과 추출 작업을 통해서 알아보자.
+
+```{r}
+is.matrix(crimtab.stat)
+is.table(crimtab.stat)
+is.list(crimtab.stat)
+is.data.frame(crimtab.stat)
+crimtab.stat[, 1]
+crimtab.stat[, "finger"]
+crimtab.stat[, "finger"][1]
+crimtab.stat[, "finger"][[1]]
+crimtab.stat[1]
+crimtab.stat["finger"]
+crimtab.stat$finger
+(crimtab.stat.df <- data.frame(crimtab.stat))
+is.matrix(crimtab.stat.df)
+is.table(crimtab.stat.df)
+is.list(crimtab.stat.df)
+is.data.frame(crimtab.stat.df)
+crimtab.stat.df[, 1]
+str(crimtab.stat.df[, 1])
+crimtab.stat.df[, "finger"]
+str(crimtab.stat.df[, "finger"])
+crimtab.stat.df[, "finger"][1]
+str(crimtab.stat.df[, "finger"][1])
+crimtab.stat.df[, "finger"][[1]]
+str(crimtab.stat.df[, "finger"][[1]])
+crimtab.stat.df[1]
+str(crimtab.stat.df[1])
+crimtab.stat.df["finger"]
+str(crimtab.stat.df["finger"])
+crimtab.stat.df["finger"][1]
+str(crimtab.stat.df["finger"][1])
+crimtab.stat.df["finger"][[1]]
+str(crimtab.stat.df["finger"][[1]])
+crimtab.stat.df$finger
+str(crimtab.stat.df$finger)
+crimtab.stat.df$finger[1]
+str(crimtab.stat.df$finger[1])
+crimtab.stat.df$finger[[1]]
+str(crimtab.stat.df$finger[[1]])
+```
+
+### ggplot
+
+* 키와 손가락 길이의 산점도  
+
+```{r, fig.width = 8, fig.height = 4}
+library(ggplot2)
+ggplot(crimtab.2.long.df, aes(x = height, y = finger)) + geom_point()
+ggplot(crimtab.2.long.df, aes(x = height, y = finger)) + geom_point(alpha = 0.9)
+ggplot(crimtab.2.long.df, aes(x = height, y = finger)) + geom_point(alpha = 0.5)
+ggplot(crimtab.2.long.df, aes(x = height, y = finger)) + geom_point(alpha = 0.1)
+ggplot(crimtab.2.long.df, aes(x = height, y = finger)) + geom_point(position = "jitter")
+ggplot(crimtab.2.long.df, aes(x = height, y = finger)) + geom_point(position = "jitter", size = 0.7)
+ggplot(crimtab.2.long.df, aes(x = height, y = finger)) + geom_point(position = position_jitter(), size = 0.7)
+ggplot(crimtab.2.long.df, aes(x = height, y = finger)) + geom_point(position = position_jitter(width = 1, height = 0), size = 0.7)
+ggplot(crimtab.2.long.df, aes(x = height, y = finger)) + geom_point(position = position_jitter(width = 1, height = 0.1), size = 0.7)
+ggplot(crimtab.2.long.df, aes(x = height, y = finger)) + geom_point(position = position_jitter(width = 1, height = 0.1), size = 0.7) +
+  theme_bw()
+```
+
+* 변수 각각의 히스토그램
+
+```{r, fig.width = 8, fig.height=4}
+ggplot(crimtab.2.long.df, aes(x = height)) + geom_histogram(alpha=0.5)
+ggplot(crimtab.2.long.df, aes(x = finger)) + geom_histogram(alpha=0.5)
+ggplot(crimtab.2.long.df, aes(x = height)) + geom_histogram(aes(y = ..density..), binwidth=1, alpha=0.5)
+ggplot(crimtab.2.long.df, aes(x = finger)) + geom_histogram(aes(y = ..density..), binwidth=0.1, alpha=0.5)
+(g.h.1 <- ggplot(crimtab.2.long.df, aes(x = height)) + geom_histogram(aes(y = ..density..), binwidth = 1, fill = "white", colour = "black"))
+(g.f.1 <- ggplot(crimtab.2.long.df, aes(x = finger)) + geom_histogram(aes(y = ..density..), binwidth = 0.2, fill = "white", colour = "black"))
+```
+
+* `breaks` 설정의 필요성
+    + default 로 그린 히스토그램에 평균과 표준편차를 위치시켜보면, Quetelet의 가슴둘레 자료를 히스토그램으로 표현할 때와 같이 0.5만큼 치우친 것을 알 수 있음.
+    + 따라서 `geom_histogram`의 원형인 `stat_bin`에 `breaks=`를 재설정할 필요.
+    
+```{r, fig.width = 8, fig.height = 4}
+library(grid)
+(mean.finger <- crimtab.stat[, 1][[1]])
+(sd.finger <- crimtab.stat[, 1][[2]])
+(mean.height <- crimtab.stat[, 2][[1]])
+(sd.height <- crimtab.stat[, 2][[2]])
+x.finger <- seq(9.5, 13.5, length.out = 3000)
+y.finger <- dnorm(x.finger, mean = mean.finger, sd = sd.finger)
+x.height <- seq(56, 77, length.out = 3000)
+y.height <- dnorm(x.height, mean = mean.height, sd = sd.height)
+(g.h.2 <- g.h.1 + annotate("segment", x = mean.height, xend = mean.height, y= -0.02, yend = 0, arrow = arrow(length=unit(0.3, "cm"))))
+(g.h.3 <- g.h.2 + theme_bw())
+(g.h.4 <- g.h.3 + geom_line(aes(x = x.height, y = y.height)))
+(g.h.5 <- ggplot(crimtab.2.long.df, aes(x = height)) + stat_bin(aes(y = ..density..), binwidth = 1, breaks = 55.5:77.5, fill = "white", colour="black"))
+(g.h.6 <- g.h.5 + annotate("segment", x = mean.height, xend = mean.height, y= -0.02, yend = 0, arrow = arrow(length = unit(0.3, "cm"))))
+(g.h.7 <- g.h.6 + theme_bw())
+(g.h.8 <- g.h.7 + geom_line(aes(x = x.height, y = y.height)))
+(g.f.1 <- ggplot(crimtab.2.long.df, aes(x = finger)) + geom_histogram(aes(y = ..density..), binwidth = 0.2, fill = "white", colour = "black"))
+(g.f.2 <- g.f.1 + annotate("segment", x = mean.finger, xend = mean.finger, y= -0.1, yend = 0, arrow = arrow(length = unit(0.3, "cm"))))
+(g.f.3 <- g.f.2 + theme_bw())
+(g.f.4 <- g.f.3 + geom_line(aes(x = x.finger, y = y.finger)))
+(g.f.5 <- ggplot(crimtab.2.long.df, aes(x = finger)) + stat_bin(aes(y = ..density..), breaks = seq(9.45, 13.55, by=0.2), fill = "white", colour="black"))
+(g.f.6 <- g.f.5 + annotate("segment", x=mean.finger, xend = mean.finger, y=-0.1, yend=0, arrow=arrow(length=unit(0.3, "cm"))))
+(g.f.7 <- g.f.6 + theme_bw())
+(g.f.8 <- g.f.7 + geom_line(aes(x=x.finger, y=y.finger)))
+```
+
+### Data 갈무리
+
+```{r}
+save.image(file="crimtab_1007.rda")
+# cor(crimtab.2.long[,1], crimtab.2.long[,2])
+```

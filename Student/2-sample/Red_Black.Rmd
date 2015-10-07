@@ -1,0 +1,60 @@
+---
+title: "Red and Black"
+author: "coop711"
+date: "2015년 4월 7일"
+output: html_document
+---
+
+Data Preparation
+----------------
+
+자료 읽혀들이기.
+
+```{r}
+red.black<-read.table("red_black.txt", header=TRUE, sep="")
+str(red.black)
+head(red.black)
+```
+
+Data Cleaning
+
+```{r}
+red.black.2<-red.black
+str(red.black.2)
+red.black.2$Color<-factor(red.black.2$Color, levels=c("Curitiba", "Veja"))
+red.black.2$Q6_1<-factor(red.black.2$Q6_1, levels=1:2, labels=c("Male", "Female"))
+red.black.2$Q6_2<-factor(red.black.2$Q6_2, levels=1:2, labels=c("Glasses", "No.Glasses"))
+red.black.2$Q6_4<-factor(red.black.2$Q6_4, levels=1:4, labels=c("Seoul", "Gyunggi", "Kangwon", "Other"))
+```
+
+Curitiba 와 Veja 응답 평균값 비교
+
+```{r}
+options(digits=2)
+aggregate(red.black.2[,-c(1, 21:23)],by=list(red.black[,1]),mean, na.rm=TRUE)
+```
+
+21-23번의 응답 테이블
+
+```{r}
+table(red.black.2[,21])
+table(red.black.2[,c(1,21)])
+table(red.black.2[,c(1,22)])
+table(red.black.2[,c(1,23)])
+```
+
+평균 점수에 차이가 있어보이는 Q3, Q4에 대하여 t-test 수행. default로 Welch's Approxiation 수행
+
+```{r}
+t.test(Q3~Color, data=red.black.2)
+t.test(Q4_1~Color, data=red.black.2)
+```
+
+한꺼번에 수행하려면 t.test 의 구조를 이용하여 함수 작성 후 apply() 적용.
+
+```{r}
+t<-function(x) {t.test(x~Color, data=red.black.2, na.rm=TRUE)}
+apply(red.black.2[,-c(1,21:23)],2, t)
+```
+
+

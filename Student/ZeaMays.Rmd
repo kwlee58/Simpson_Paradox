@@ -1,0 +1,87 @@
+---
+title: "ZeaMays Data"
+author: "coop711"
+date: "2015년 3월 30일"
+output: html_document
+---
+
+- ZeaMays Data 는 "HistData" package 에 있음. 
+
+```{r}
+install.packages("HistData", repos="http://cran.rstudio.com")
+library(HistData)
+str(ZeaMays)
+ZeaMays
+attach(ZeaMays)
+```
+
+- Competition 현상 확인.
+
+```{r fig.width=8, fig.height=4}
+par(mfrow=c(1,2))
+plot(x=self, y=cross, xlim=c(10, 25), ylim=c(10, 25))
+title(main="Cross and Self Fertilisation")
+plot(x=self, y=cross, pch=16, xlim=c(10, 25), ylim=c(10, 25))
+title(main="Cross and Self Fertilisation")
+abline(lsfit(x=self, y=cross)$coef, col="red")
+cor(self, cross)
+text(x=15, y=15, labels=paste("r =", round(cor(cross, self), digits=3)))
+par(mfrow=c(1,1))
+```
+
+- boxplot 으로 비교하면 이 현상을 파악하기 어려움. 같은 결과를 갖는 두 가지 boxplot 작성 코드 비교.
+
+```{r fig.width=8, fig.height=4}
+par(mfrow=c(1,2))
+boxplot(ZeaMays[, c("cross", "self")], ylab="Height (in)", xlab="Fertilisation")
+boxplot(cross, self, names=c("cross", "self"), ylab="Height (in)", xlab="Fertilisation")
+```
+
+- 쌍으로 키우고 있으므르 성장의 차이는 paired one-sample t-test
+
+```{r}
+t.test(x=cross, y=self, paired=T)
+```
+
+- 또는 둘 사이의 차이인 diff 대하여 one-sample t-test 를 수행하여도 동일한 결과. 이 때는 모든 매개변수는 디폴트 값으로 충족됨에 유의.
+
+```{r}
+t.test(diff)
+```
+
+-  정규성에 대한 가정은 ad.test로 수행
+
+```{r}
+library(nortest)
+lapply(list(cross=cross, self=self, diff=diff), ad.test)
+```
+
+- cross 자료에 대한 정규성은 매우 의심되는 수준. qqnorm으로 파악.
+
+```{r fig.width=12, fig.height=4}
+par(mfrow=c(1,3))
+lapply(list(cross=cross, self=self, diff=diff), qqnorm)
+par(mfrow=c(1,1))
+```
+
+- t.test의 대안으로 wilkox.test 수행. 먼저 signed ranks를 구하면. 
+
+```{r}
+sign(diff)*rank(abs(diff))
+```
+
+- 1에서 15까지 자연수의 합은 `r sum(1:15)` 이므로 통계량은 양의 부호 순위합임.
+
+```{r}
+wilcox.test(cross, self, paired=T)
+wilcox.test(diff)
+```
+
+-  cross와 self 가 성장률이 동일하다는 가설은 기각됨. 화분 간의 차이가 있는지 분산분석으로 살핀다면?
+
+```{r}
+anova(lm(diff~pot, data=ZeaMays))
+```
+
+- 화분 간의 차이는 없다고 결론.
+
