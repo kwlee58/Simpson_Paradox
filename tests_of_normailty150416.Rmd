@@ -50,7 +50,6 @@ max.weight<-max(rn96$weight)
 x.weight<-seq(min.weight,max.weight,1/100)
 plot(ecdf(rn96$weight), main="ECDF for Weight")
 lines(x.weight,pnorm(x.weight,mean.weight,sd.weight),col="red")
-
 ```
 
 - 5가지 종류의 정규성 검증을  apply()함수를 이용하여 3개의 변수에 한꺼번에 적용
@@ -171,8 +170,8 @@ apply(cbind(quetelet.chest.long.sample,quetelet.chest.noise.sample),2,sf.test)
 ```
 
 - qqnorm() 을 그려보면 
-```{r fig.width=5, fig.height=10}
-par(mfrow=c(2,1))
+```{r fig.width=10, fig.height=5}
+par(mfrow=c(1,2))
 qqnorm(quetelet.chest.long, main="Normal Q-Q Plot w.o. Noise")
 qqnorm(quetelet.chest.noise, main="Normal Q-Q Plot with Noise")
 ```

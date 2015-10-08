@@ -93,6 +93,14 @@ quetelet.chest.long<-c(quetelet.chest.long,rep(i,quetelet.chest$freq[i-32]))
 length(quetelet.chest.long)
 ```
 
+- 이를 한 줄로 표현하면
+
+```{r}
+quetelet.chest.long.2<-rep(quetelet.chest$chest, quetelet.chest$freq)
+head(quetelet.chest.long.2, n=10)
+str(quetelet.chest.long.2)
+```
+
 - 히스토그램을 정규분포 곡선과 비교하기 위하여 가슴둘레 자료의 평균과 표준편차를 계산한 뒤 밀도함수를 그리기 위한 좌표 마련
 
 ```{r}

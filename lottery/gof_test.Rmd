@@ -1,0 +1,177 @@
+---
+title: "Goodness of Fit Test"
+author: "coop711"
+date: "2015년 3월 14일"
+output: html_document
+---
+
+Matching Problems
+-----------------
+
+-  매칭 문제에서 관찰한 값들을 data frame 으로 저장.
+
+```{r}
+options(digits=3)
+n.matching<-c(0,1,2,4)
+o.matching<-c(22,12,15,1)
+p.matching<-c(9,8,6,1)/24
+matching<-data.frame(n.matching, o.matching, p.matching)
+matching
+```
+- 표본평균을 계산하여 $1\pm 1/\sqrt{50}$ 에 들어가는 지 확인.
+
+```{r}
+mean.matching<-sum(n.matching*o.matching/sum(o.matching))
+mean.matching
+```
+
+- p.matching 으로 계산한 확률모델에 부합하는지 적합도 검정 수행. 각종 검정통계량 확인. warning() 이 나온 이유가 무엇인지 함께 산출된 통계값들을 근거로 파악.
+
+```{r}
+chisq.test.matching<-chisq.test(x=o.matching,p=p.matching)
+chisq.test.matching
+chisq.test.matching$statistic
+chisq.test.matching$parameter
+chisq.test.matching$p.value
+chisq.test.matching$method
+chisq.test.matching$data.name
+chisq.test.matching$observed
+chisq.test.matching$expected
+chisq.test.matching$residuals
+chisq.test.matching$stdres
+```
+
+- 검정통계량을 계산하고, p-value를 찾는 과정을 단계별로 살펴보자.
+
+```{r}
+sum(o.matching)
+e.matching<-50*p.matching
+e.matching
+(o.matching-e.matching)**2/e.matching
+sum((o.matching-e.matching)**2/e.matching)
+chisq.matching<-sum((o.matching-e.matching)**2/e.matching)
+chisq.matching
+p.value<-1-pchisq(chisq.matching, df=3)
+p.value
+```
+
+- warnings()가 나온 이유는 기대돗수가 5보다 작은 값들이 나왔기 때문이므로 matching이 2와 4인 경우를 합하여 카이제곱 적합도 검증을 다시 수행할 필요. 그 과정은 다음과 같음. 우선 매칭 자료를 하나의 data frame 으로 구성하고 구조 파악. n.matching은 수치로서의 의미도 있으나 적합도 검정에서는  구분의 역할만 하므로 나중에 factor로 재구조화.
+
+```{r}
+matching<-data.frame(n.matching=n.matching, o.matching=o.matching, p.matching=p.matching)
+matching
+str(matching)
+matching.2<-matching
+matching.2
+matching.2[5,]<-matching.2[3,]+matching.2[4,]
+matching.2
+matching.2<-matching.2[-(3:4),]
+matching.2
+matching.2$n.matching<-factor(matching.2$n.matching, levels=c(0,1,6),labels=c("0","1","2 or 4"))
+chisq.test(x=matching.2$o.matching,p=matching.2$p.matching)
+```
+
+- 셀병합을 하지 않고 p-value를 구하는 방법은 붓스트랩을 활용하는 것으로 simulate.p.value=T, B=2000 등을 지정하는 것임. 이러한 방식으로 p-value를 구하는 것이 frequentist 관점에 보다 부합함. 이 작업은 반복할 때 마다 값이 달라질 수 밖에 없음. 그럼에도 불구하고 당초 카이제곱 분포로 근사한 값과 거의 같은 값을 얻게 됨에 유의. 
+
+```{r}
+chisq.matching.B<-chisq.test(x=o.matching, p=p.matching, simulate.p.value=T, B=2000)
+chisq.matching.B
+```
+
+Lottery Data의 Uniformity Test
+------------------------------
+
+- lottery 자료 읽어들이기. 기초통계 확인. 
+
+```{r}
+lottery<-read.table("lottery.txt",header=TRUE)
+head(lottery)
+attach(lottery)
+```
+
+- lottery의 시행과정을 듣고 각 기초통계 값이 이론적으로 기대하는 값과 잘 들어맞는지 판단. 
+
+```{r}
+summary(lottery.number)
+sd(lottery.number)
+```
+
+One Sample Test
+---------------
+- 당첨번호들이 공평하게 나왔다면 0에서 999사이의 어느 번호나 랜덤하게 나올 수 있으므로 모평균이 $\frac{0+999}{2}=499.5$, 표준편차는 $\sqrt{\frac{(999-0)^2}{12}}\approx288$ 인 모집단에서 254회 복원추출한 표본으로 생각할 수 있음. 모평균 $\mu=499.5$를 t.test로 검정하여보면? (표본의 표준편차는 모집단의 표준편차와 거의 비슷.) 모집단이 정규분포와는 판이하게 다름에도 불구하고 t.test를 수행할 수 있는 배경은?
+
+```{r}
+lottery.t.test<-t.test(lottery.number, mu=499.5)
+lottery.t.test$statistic
+lottery.t.test$method
+```
+
+- 실제로 t 값을 구하는 과정을 R로 살펴보자.
+
+```{r}
+mean.number<-mean(lottery$lottery.number)
+sd.number<-sd(lottery$lottery.number)
+lottery.t<-(mean.number-499.5)/(sd.number/sqrt(254))
+lottery.t
+pt(lottery.t, df=253)*2
+pnorm(lottery.t)*2
+
+```
+
+카이제곱 적합도 검정
+--------------------
+
+- lottery.number 의 분포를 살피기 위하여 히스토그램 작성
+
+```{r}
+h10<-hist(lottery.number)
+```
+
+- 각 계급에 관찰된 당첨번호의 갯수를 파악하기 위하여 h10$counts 출력
+
+```{r}
+h10$counts
+```
+
+- 당첨번호의 갯수가 uniform 하게 추출된 것으로 보아도 무방한지 $\chi^2$ 테스트 수행. 왜 다른 argument들을 설정하지 않아도 되는지 help 파일로 확인하고, 이어서 계산되는 값들 중에서 기대돗수 확인.
+
+```{r}
+chisq.test(h10$counts)
+chisq.test(h10$counts)$expected
+```
+---------------------------------
+
+- 계급의 갯수를 바꿔가면서 테스트, breaks로 조정하는 이유에 대하여 생각해 볼 것.
+
+
+```{r fig.width=16, fig.height=8}
+opar<-par(no.readonly=TRUE)
+par(mfrow=c(2,4))
+h9<-hist(lottery.number, breaks=seq(0,999, by=111))
+h8<-hist(lottery.number, breaks=seq(0,1000, by=125))
+h7<-hist(lottery.number, breaks=seq(0,1001, by=143))
+h6<-hist(lottery.number, breaks=seq(0,1002, by=167))
+h5<-hist(lottery.number, breaks=seq(0,1000, by=200))
+h4<-hist(lottery.number, breaks=seq(0,1000, by=250))
+h3<-hist(lottery.number, breaks=seq(0,999, by=333))
+h2<-hist(lottery.number, breaks=seq(0,1000, by=500))
+```
+
+- 각각의 count 통계량에 대하여 uniformity 적합도 검정을 하기 위하여 다음 수행. 같은 작업을 sapply()로 수행하면 어떤 결과가 나오는지 비교하시오.
+
+```{r}
+lapply(list(h9$counts, h8$counts, h7$counts, h6$counts, h5$counts, h4$counts, h3$counts, h2$counts), chisq.test)
+```
+
+- 위의 결과와 아래의 결과를 비교하여 어떤 것이 더 보기에 나은지 비교하시오.
+
+```{r}
+lapply(list(h9=h9$counts, h8=h8$counts, h7=h7$counts, h6=h6$counts, h5=h5$counts, h4=h4$counts, h3=h3$counts, h2=h2$counts), chisq.test)
+```
+
+```{r}
+detach()
+```
+
+
+
